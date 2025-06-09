@@ -1,91 +1,151 @@
-
-<?php 
+<?php
 error_reporting(0);
 include '../Includes/dbcon.php';
 include '../Includes/session.php';
 
-//------------------------SAVE--------------------------------------------------
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+require '../vendor/autoload.php';
+
+$statusMsg = "";
 
 if (isset($_POST['save'])) {
-    $id = $_POST['symbolnumber'];
-    $class = $_POST['ClassId'];
+    $symbolNo = $_POST['symbolnumber'];
+    $classId = $_POST['ClassId'];
     $firstName = $_POST['firstName'];
     $lastName = $_POST['lastName'];
     $email = $_POST['emailaddress'];
-    $admissionNumber = $_POST['RegistrationNo'];
+    $registrationNo = $_POST['RegistrationNo'];
     $program = $_POST['Program'];
     $year = $_POST['Year(Batch)'];
 
-    $query = mysqli_query($conn, "SELECT * FROM tblstudents WHERE SymbolNo ='$id'");
-    $ret = mysqli_fetch_array($query);
+    // Define sample default password
+    $samplePassword = "Student@123";
+    $hashedPassword = md5($samplePassword); // Use a stronger hashing algorithm in production
 
-    if ($ret > 0) {
-        $statusMsg = "<div class='alert alert-danger' style='margin-right:700px;'>This Student Already Exists!</div>";
+
+    // Generate secure password setup token and expiry
+    $token = bin2hex(random_bytes(32));
+    $expiry = date("Y-m-d H:i:s", strtotime("+1 day"));
+    $setupUrl = "http://localhost/E-attendance/Student/student_setup.php?token=$token";
+
+    // Check for existing student
+    $stmt = $conn->prepare("SELECT 1 FROM tblstudents WHERE SymbolNo = ?");
+    $stmt->bind_param("s", $symbolNo);
+    $stmt->execute();
+    $stmt->store_result();
+
+    if ($stmt->num_rows > 0) {
+        $statusMsg = "<div class='alert alert-danger'>This Student Already Exists!</div>";
     } else {
-        $query = mysqli_query($conn, "INSERT INTO tblstudents (SymbolNo, ClassId, firstName, lastName, RegistrationNo, Program, `Year(Batch)`, emailAddress) 
-                                      VALUES ('$id', '$class', '$firstName', '$lastName', '$admissionNumber', '$program', '$year', '$email')");
+        $stmt->close();
 
-        if ($query) {
-            $statusMsg = "<div class='alert alert-success' style='margin-right:700px;'>Created Successfully!</div>";
+        // Insert new student
+        $stmt = $conn->prepare("INSERT INTO tblstudents (
+            SymbolNo, ClassId, firstName, lastName, RegistrationNo, Program, `Year(Batch)`, emailAddress, password, webauthn_setup_token, webauthn_setup_token_expiry
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $stmt->bind_param("sisssssssss", $symbolNo, $classId, $firstName, $lastName, $registrationNo, $program, $year, $email, $hashedPassword, $token, $expiry);
+
+        if ($stmt->execute()) {
+            // Send welcome email with setup link
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.gmail.com';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'paudelranjan14@gmail.com';
+                $mail->Password   = 'mxxpxoivbkdauvlc'; // Consider using env variable for security
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = 587;
+
+                $mail->setFrom('no-reply@yourschool.com', 'School Admin');
+                $mail->addAddress($email, "$firstName $lastName");
+
+                $mail->isHTML(true);
+                $mail->Subject = 'Your Student Account Has Been Created';
+                $mail->Body = "
+                    <p>Dear $firstName $lastName,</p>
+                    <p>Your student account has been created successfully.</p>
+                    <ul>
+                        <li><strong>Symbol Number:</strong> $symbolNo</li>
+                        <li><strong>Registration Number:</strong> $registrationNo</li>
+                        <li><strong>Program:</strong> $program</li>
+                        <li><strong>Year (Batch):</strong> $year</li>
+                        <li><strong>Sample Password:</strong> $samplePassword</li>
+                    </ul>
+                    <p>Please change your password and set up your Face ID by clicking the link below:</p>
+                    <p><a href='$setupUrl'>$setupUrl</a></p>
+                    <p>This link will expire in 24 hours.</p>
+                    <p>Best regards,<br>Your School Administration</p>
+                ";
+
+                $mail->send();
+                $statusMsg = "<div class='alert alert-success'>Student created successfully! Email sent.</div>";
+            } catch (Exception $e) {
+                $statusMsg = "<div class='alert alert-warning'>Student created, but email failed to send. Error: {$mail->ErrorInfo}</div>";
+            }
         } else {
-            $statusMsg = "<div class='alert alert-danger' style='margin-right:700px;'>An error occurred!</div>";
+            $statusMsg = "<div class='alert alert-danger'>Error occurred while saving student!</div>";
         }
+
+        $stmt->close();
     }
 }
 
-//---------------------------------------EDIT-------------------------------------------------------------
+// -------------------- EDIT STUDENT --------------------
 
-if (isset($_GET['Id']) && isset($_GET['action']) && $_GET['action'] == "edit") {
+if (isset($_GET['Id']) && $_GET['action'] == 'edit') {
     $Id = $_GET['Id'];
-
-    $query = mysqli_query($conn, "SELECT * FROM tblstudents WHERE SymbolNo ='$Id'");
-    $row = mysqli_fetch_array($query);
-
-    //------------UPDATE-----------------------------
-
-    if (isset($_POST['update'])) {
-        $firstName = $_POST['firstName'];
-        $lastName = $_POST['lastName'];
-        $email = $_POST['emailaddress'];
-        $admissionNumber = $_POST['RegistrationNo'];
-        $program = $_POST['Program'];
-        $year = $_POST['Year(Batch)'];
-
-        $query = mysqli_query($conn, "UPDATE tblstudents
-                                      SET firstName = '$firstName',
-                                          lastName = '$lastName',
-                                          RegistrationNo = '$admissionNumber',
-                                          Program = '$program',
-                                          `Year(Batch)` = '$year',
-                                          emailAddress = '$email'
-                                      WHERE SymbolNo = '$Id'");
-
-        if ($query) {
-            echo "<script type='text/javascript'>
-                    window.location = ('createStudents.php')
-                  </script>";
-        } else {
-            $statusMsg = "<div class='alert alert-danger' style='margin-right:700px;'>An error occurred!</div>";
-        }
-    }
+    $stmt = $conn->prepare("SELECT * FROM tblstudents WHERE SymbolNo = ?");
+    $stmt->bind_param("s", $Id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
 }
 
-//--------------------------------DELETE------------------------------------------------------------------
+// -------------------- UPDATE STUDENT --------------------
 
-if (isset($_GET['Id']) && isset($_GET['action']) && $_GET['action'] == "delete") {
+if (isset($_POST['update']) && isset($_GET['Id'])) {
     $Id = $_GET['Id'];
+    $firstName = $_POST['firstName'];
+    $lastName = $_POST['lastName'];
+    $email = $_POST['emailaddress'];
+    $registrationNo = $_POST['RegistrationNo'];
+    $program = $_POST['Program'];
+    $year = $_POST['Year(Batch)'];
 
-    $query = mysqli_query($conn, "DELETE FROM tblstudents WHERE SymbolNo='$Id'");
+    $stmt = $conn->prepare("UPDATE tblstudents 
+                            SET firstName = ?, lastName = ?, RegistrationNo = ?, Program = ?, `Year(Batch)` = ?, emailAddress = ? 
+                            WHERE SymbolNo = ?");
+    $stmt->bind_param("sssssss", $firstName, $lastName, $registrationNo, $program, $year, $email, $Id);
 
-    if ($query == TRUE) {
-        echo "<script type='text/javascript'>
-                window.location = ('createStudents.php')
-              </script>";
+    if ($stmt->execute()) {
+        echo "<script>window.location='createStudents.php';</script>";
+        exit;
     } else {
-        $statusMsg = "<div class='alert alert-danger' style='margin-right:700px;'>An error occurred!</div>";
+        $statusMsg = "<div class='alert alert-danger'>Update failed!</div>";
     }
+    $stmt->close();
+}
+
+// -------------------- DELETE STUDENT --------------------
+
+if (isset($_GET['Id']) && $_GET['action'] == 'delete') {
+    $Id = $_GET['Id'];
+    $stmt = $conn->prepare("DELETE FROM tblstudents WHERE SymbolNo = ?");
+    $stmt->bind_param("s", $Id);
+
+    if ($stmt->execute()) {
+        echo "<script>window.location='createStudents.php';</script>";
+        exit;
+    } else {
+        $statusMsg = "<div class='alert alert-danger'>Deletion failed!</div>";
+    }
+    $stmt->close();
 }
 ?>
+
 
 
 <!DOCTYPE html>
@@ -98,7 +158,7 @@ if (isset($_GET['Id']) && isset($_GET['action']) && $_GET['action'] == "delete")
   <meta name="description" content="">
   <meta name="author" content="">
   <link href="img/logo/attnlg.jpg" rel="icon">
-<?php include 'includes/title.php';?>
+ <title>Create Students</title>
   <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
   <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="css/ruang-admin.min.css" rel="stylesheet">

@@ -1,0 +1,53 @@
+{
+    "name": "web-auth/webauthn-symfony-bundle",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "description": "FIDO2/Webauthn Security Bundle For Symfony",
+    "keywords": [
+        "FIDO",
+        "FIDO2",
+        "webauthn",
+        "symfony",
+        "symfony-bundle",
+        "bundle"
+    ],
+    "homepage": "https://github.com/web-auth",
+    "authors": [
+        {
+            "name": "Florent Morselli",
+            "homepage": "https://github.com/Spomky"
+        },
+        {
+            "name": "All contributors",
+            "homepage": "https://github.com/web-auth/webauthn-symfony-bundle/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "psr/event-dispatcher": "^1.0",
+        "symfony/config": "^6.4|^7.0",
+        "symfony/dependency-injection": "^6.4|^7.0",
+        "symfony/framework-bundle": "^6.4|^7.0",
+        "symfony/http-client": "^6.4|^7.0",
+        "symfony/security-bundle": "^6.4|^7.0",
+        "symfony/security-core": "^6.4|^7.0",
+        "symfony/security-http": "^6.4|^7.0",
+        "symfony/serializer": "^6.4|^7.0",
+        "symfony/validator": "^6.4|^7.0",
+        "web-auth/webauthn-lib": "self.version"
+    },
+    "extra": {
+        "thanks": {
+            "name": "web-auth/webauthn-framework",
+            "url": "https://github.com/web-auth/webauthn-framework"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Webauthn\\Bundle\\": "src/"
+        }
+    },
+    "suggest": {
+        "symfony/security-bundle": "Symfony firewall using a JSON API (perfect for script applications)"
+    }
+}
