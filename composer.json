@@ -1,0 +1,7 @@
+{
+    "require": {
+        "lbuchs/webauthn": "^2.2",
+        "phpmailer/phpmailer": "^6.10",
+        "web-auth/webauthn-framework": "*"
+    }
+}
