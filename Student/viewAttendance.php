@@ -1,6 +1,6 @@
 <?php
-include '../Includes/dbcon.php';
 include '../Includes/session.php';
+include '../Includes/dbcon.php';
 
 // Assuming student information is stored in session variables
 $student_name = $_SESSION['firstName'] . ' ' . $_SESSION['lastName'];
