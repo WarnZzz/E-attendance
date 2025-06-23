@@ -1,8 +1,6 @@
 <?php
 include '../Includes/dbcon.php';
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+include '../Includes/session.php';
 
 
 // Assuming student information is stored in session variables

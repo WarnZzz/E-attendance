@@ -2,11 +2,6 @@
 <?php 
 include '../Includes/dbcon.php';
 include '../Includes/session.php';
-
-
-
-
-
 ?>
 
 <!DOCTYPE html>

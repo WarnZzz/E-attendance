@@ -1,10 +1,7 @@
 <?php
-require_once '../Includes/dbcon.php'; // Your DB connection
+include '../Includes/dbcon.php';
+include '../Includes/session.php';
 require_once '../vendor/autoload.php'; // WebAuthn library
-
-use lbuchs\WebAuthn\WebAuthn;
-
-session_start();
 
 // Validate token from URL
 if (!isset($_GET['token'])) {
@@ -46,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Set Password - Teacher Setup</title>
     <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
