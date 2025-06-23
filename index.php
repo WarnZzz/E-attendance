@@ -1,6 +1,22 @@
 <?php 
-include 'Includes/dbcon.php';
 session_start();
+
+if (isset($_SESSION['userId']) && isset($_SESSION['userRole'])) {
+    // Session is active, redirect based on user role
+    switch ($_SESSION['userRole']) {
+        case 'Administrator':
+            header("Location: Admin/index.php");
+            exit;
+        case 'ClassTeacher':
+            header("Location: ClassTeacher/index.php");
+            exit;
+        case 'Student':
+            header("Location: Student/index.php");
+            exit;
+    }
+}
+
+include 'Includes/dbcon.php';
 ?>
 
 <!DOCTYPE html>
@@ -62,55 +78,55 @@ session_start();
                                     $username = $_POST['username'] ?? '';
                                     $password = md5($_POST['password'] ?? '');
 
-                                        if ($userType == "Administrator") {
-                                            $query = "SELECT * FROM tbladmin WHERE emailAddress = '$username' AND password = '$password'";
-                                            $rs = $conn->query($query);
-                                            $rows = $rs->fetch_assoc();
-                                            if ($rs->num_rows > 0) {
-                                                $_SESSION['userId'] = $rows['Id'];
-                                                $_SESSION['firstName'] = $rows['firstName'];
-                                                $_SESSION['lastName'] = $rows['lastName'];
-                                                $_SESSION['emailAddress'] = $rows['emailAddress'];
-                                                $_SESSION['userRole'] = 'Administrator';
-                                                header("Location: emailOTP.php");
-                                                exit;
-                                            } else {
-                                                echo "<div class='alert alert-danger'>Invalid Username/Password!</div>";
-                                            }
-                                        } else if ($userType == "ClassTeacher") {
-                                            $query = "SELECT * FROM tblclassteacher WHERE emailAddress = '$username' AND password = '$password'";
-                                            $rs = $conn->query($query);
-                                            $rows = $rs->fetch_assoc();
-                                            if ($rs->num_rows > 0) {
-                                                $_SESSION['userId'] = $rows['Id'];
-                                                $_SESSION['firstName'] = $rows['firstName'];
-                                                $_SESSION['lastName'] = $rows['lastName'];
-                                                $_SESSION['emailAddress'] = $rows['emailAddress'];
-                                                $_SESSION['userRole'] = 'ClassTeacher';
-                                                header("Location: emailOTP.php");
-                                                exit;
-                                            } else {
-                                                echo "<div class='alert alert-danger'>Invalid Username/Password!</div>";
-                                            }
-                                        } else if ($userType == "Student") {
-                                            $symbolNo = $_POST['symbolNo'];
-                                            $query = "SELECT * FROM tblstudents WHERE SymbolNo = '$symbolNo' AND password = '$password'";
-                                            $rs = $conn->query($query);
-                                            $rows = $rs->fetch_assoc();
-                                            if ($rs->num_rows > 0) {
-                                                $_SESSION['userId'] = $rows['SymbolNo'];
-                                                $_SESSION['firstName'] = $rows['firstName'];
-                                                $_SESSION['lastName'] = $rows['lastName'];
-                                                $_SESSION['emailAddress'] = $rows['emailAddress'];
-                                                $_SESSION['userRole'] = 'Student';
-                                                header("Location: emailOTP.php");
-                                                exit;
-                                            } else {
-                                                echo "<div class='alert alert-danger'>Invalid Symbol Number or Password!</div>";
-                                            }
+                                    if ($userType == "Administrator") {
+                                        $query = "SELECT * FROM tbladmin WHERE emailAddress = '$username' AND password = '$password'";
+                                        $rs = $conn->query($query);
+                                        $rows = $rs->fetch_assoc();
+                                        if ($rs->num_rows > 0) {
+                                            $_SESSION['userId'] = $rows['Id'];
+                                            $_SESSION['firstName'] = $rows['firstName'];
+                                            $_SESSION['lastName'] = $rows['lastName'];
+                                            $_SESSION['emailAddress'] = $rows['emailAddress'];
+                                            $_SESSION['userRole'] = 'Administrator';
+                                            header("Location: emailOTP.php");
+                                            exit;
+                                        } else {
+                                            echo "<div class='alert alert-danger'>Invalid Username/Password!</div>";
+                                        }
+                                    } else if ($userType == "ClassTeacher") {
+                                        $query = "SELECT * FROM tblclassteacher WHERE emailAddress = '$username' AND password = '$password'";
+                                        $rs = $conn->query($query);
+                                        $rows = $rs->fetch_assoc();
+                                        if ($rs->num_rows > 0) {
+                                            $_SESSION['userId'] = $rows['Id'];
+                                            $_SESSION['firstName'] = $rows['firstName'];
+                                            $_SESSION['lastName'] = $rows['lastName'];
+                                            $_SESSION['emailAddress'] = $rows['emailAddress'];
+                                            $_SESSION['userRole'] = 'ClassTeacher';
+                                            header("Location: emailOTP.php");
+                                            exit;
+                                        } else {
+                                            echo "<div class='alert alert-danger'>Invalid Username/Password!</div>";
+                                        }
+                                    } else if ($userType == "Student") {
+                                        $symbolNo = $_POST['symbolNo'];
+                                        $query = "SELECT * FROM tblstudents WHERE SymbolNo = '$symbolNo' AND password = '$password'";
+                                        $rs = $conn->query($query);
+                                        $rows = $rs->fetch_assoc();
+                                        if ($rs->num_rows > 0) {
+                                            $_SESSION['userId'] = $rows['SymbolNo'];
+                                            $_SESSION['firstName'] = $rows['firstName'];
+                                            $_SESSION['lastName'] = $rows['lastName'];
+                                            $_SESSION['emailAddress'] = $rows['emailAddress'];
+                                            $_SESSION['userRole'] = 'Student';
+                                            $redirect = $_GET['redirect'] ?? '';
+                                            header("Location: emailOTP.php" . ($redirect ? "?redirect=" . urlencode($redirect) : ''));
+                                            exit();
+                                        } else {
+                                            echo "<div class='alert alert-danger'>Invalid Symbol Number or Password!</div>";
                                         }
                                     }
-
+                                }
                                 ?>
                             </div>
                         </div>

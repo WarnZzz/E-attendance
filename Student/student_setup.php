@@ -1,6 +1,6 @@
 <?php
-session_start();
 include '../Includes/dbcon.php';
+include '../Includes/session.php';
 
 $error = "";
 

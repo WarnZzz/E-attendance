@@ -1,5 +1,13 @@
 
 <?php 
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['userId'])) {
+    // Not logged in or session expired
+    header('Location: ../login.php'); // or your login page
+    exit;
+}
   $query = "SELECT * FROM tblstudents WHERE SymbolNo = ".$_SESSION['userId']."";
   $rs = $conn->query($query);
   $num = $rs->num_rows;

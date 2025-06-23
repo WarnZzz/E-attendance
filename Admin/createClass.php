@@ -1,8 +1,10 @@
 
 <?php 
-error_reporting(0);
 include '../Includes/dbcon.php';
 include '../Includes/session.php';
+
+$statusMsg = ''; // Initialize to avoid undefined warning
+$row = [];       // Safe fallback in case not in edit mode
 
 //------------------------SAVE--------------------------------------------------
 
@@ -154,13 +156,15 @@ if (isset($_POST['save'])) {
                     </div>
                         <div class="col-xl-6">
                         <label class="form-control-label">Batch(Year)<span class="text-danger ml-2">*</span></label>
-                      <input type="text" class="form-control" name="batch" value="<?php echo $row['Year(Batch)'];?>"  >
+                      <input type="text" class="form-control" name="batch" value="<?php echo isset($row['Year(Batch)']) ? $row['Year(Batch)'] : ''; ?>">
+
                         </div>
                     </div>
                      <div class="form-group row mb-3">
                         <div class="col-xl-6">
                         <label class="form-control-label">Section(if any)</label>
-                        <input type="text" class="form-control" name="section" value="<?php echo $row['section'];?>"  >
+                        <input type="text" class="form-control" name="section" value="<?php echo isset($row['section']) ? $row['section'] : ''; ?>">
+
                         </div>
                     </div>
                       <?php

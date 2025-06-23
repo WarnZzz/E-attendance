@@ -1,7 +1,7 @@
 <?php
 // joinVirtualClass.php
 include '../Includes/dbcon.php';
-session_start();
+include '../Includes/session.php';
 $student_id = $_SESSION['userId'];
 $studentClassId = 0;
 ?>
@@ -50,22 +50,21 @@ $studentClassId = 0;
                     </thead>
                     <tbody>
                       <?php
-                      $student_id = $_SESSION['userId'];
-                      $studentClassId = 0;
-
-// Get student class ID
-                  if ($student_id) {
-                      $query = "SELECT ClassId FROM tblstudents WHERE SymbolNo = ?";
-                      $stmt = $conn->prepare($query);
-                      if ($stmt) {
-                          $stmt->bind_param("s", $student_id);
-                          $stmt->execute();
-                          $stmt->bind_result($classId);
-                          if ($stmt->fetch()) {
-                              $studentClassId = $classId;
+                      // Get student class ID
+                      if ($student_id) {
+                          $query = "SELECT ClassId FROM tblstudents WHERE SymbolNo = ?";
+                          $stmt = $conn->prepare($query);
+                          if ($stmt) {
+                              $stmt->bind_param("s", $student_id);
+                              $stmt->execute();
+                              $stmt->bind_result($classId);
+                              if ($stmt->fetch()) {
+                                  $studentClassId = $classId;
+                              }
+                              $stmt->close();
                           }
-                          $stmt->close();
-                      }}
+                      }
+
                       if ($studentClassId > 0) {
                           $query = "SELECT vc.classDate, vc.jitsiLink, ca.CourseCode, ca.CourseName 
                                     FROM tblvirtualclass vc
@@ -83,12 +82,12 @@ $studentClassId = 0;
                                   while ($row = $result->fetch_assoc()) {
                                       $course = htmlspecialchars($row['CourseCode']) . ' - ' . htmlspecialchars($row['CourseName']);
                                       $dateTime = date("d M Y, h:i A", strtotime($row['classDate']));
-                                      $link = htmlspecialchars($row['jitsiLink']);
+                                      $room = urlencode($row['jitsiLink']); // JaaS room name (not full link)
 
                                       echo "<tr>
                                               <td>$course</td>
                                               <td>$dateTime</td>
-                                              <td><a href=\"$link\" target=\"_blank\" class=\"btn btn-success btn-sm\">Join Class</a></td>
+                                              <td><a href=\"joinClass.php?room=$room\" target=\"_blank\" class=\"btn btn-success btn-sm\">Join Class</a></td>
                                             </tr>";
                                   }
                               } else {

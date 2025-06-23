@@ -1,9 +1,6 @@
-<?php if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-define('ROOT_PATH', realpath(dirname(__FILE__) . '/../../'));
-include_once ROOT_PATH . '/Includes/dbcon.php';
-
+<?php 
+include '../Includes/dbcon.php';
+include '../Includes/session.php';
 
 $student_id = isset($_SESSION['userId']) ? $_SESSION['userId'] : 0;
 $studentClassId = 0;
@@ -42,10 +39,27 @@ $studentClassId = 0;
     $collapseId = 'collapseCourse' . $index;
     $courseId = $course['Id'];
 
-    // Check if a live virtual class exists for this course
+    // Check if a live virtual class exists
     $liveQuery = "SELECT * FROM tblvirtualclass WHERE courseId = $courseId AND isActive = 1 AND classDate <= NOW()";
     $liveResult = mysqli_query($conn, $liveQuery);
     $isLive = mysqli_num_rows($liveResult) > 0;
+
+    // ✅ Check for active attendance session
+    $attendanceQuery = "SELECT UniqueCode 
+                    FROM tblattendance_sessions 
+                    WHERE CourseId = $courseId 
+                      AND ExpiresAt >= NOW() 
+                      AND Status = 'active' 
+                      AND Cancelled = 0";
+$attendanceResult = mysqli_query($conn, $attendanceQuery);
+$attendanceSession = mysqli_fetch_assoc($attendanceResult);
+echo mysqli_error($conn); // Debugging line to check for errors
+
+    // If no active attendance session, set to null
+    if (!$attendanceSession) {
+        $attendanceSession = null;
+    }
+
   ?>
     <li class="nav-item">
       <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#<?= $collapseId ?>"
@@ -64,8 +78,13 @@ $studentClassId = 0;
           <a class="collapse-item" href="viewAttendance.php?course_id=<?= $courseId ?>">Attendance Performance</a>
           <a class="collapse-item" href="academicPerformance.php?course_id=<?= $courseId ?>">Academic Performance</a>
           <a class="collapse-item" href="materials.php?course_id=<?= $courseId ?>&type=syllabus">Syllabus</a>
-          <a class="collapse-item" href="materials.php?course_id=<?= $courseId ?>&type=notes">Notes</a>
-          <a class="collapse-item" href="materials.php?course_id=<?= $courseId ?>&type=assignments">Assignments</a>
+          <a class="collapse-item" href="viewNotes.php?course_id=<?= $courseId ?>&type=notes">Notes</a>
+          <a class="collapse-item" href="viewAssignment.php?course_id=<?= $courseId ?>&type=assignments">Assignments</a>
+
+          <?php if ($attendanceSession): ?>
+            <a class="collapse-item text-primary font-weight-bold" href="markAttendance.php?code=<?= $attendanceSession['UniqueCode'] ?>">Mark Attendance</a>
+          <?php endif; ?>
+
           <?php if ($isLive): ?>
             <a class="collapse-item text-success font-weight-bold" href="joinVirtualClass.php?course_id=<?= $courseId ?>">Join Class</a>
           <?php endif; ?>
@@ -73,7 +92,7 @@ $studentClassId = 0;
       </div>
     </li>
   <?php endforeach; ?>
-
+  <!-- Logout -->
   <hr class="sidebar-divider">
   <li class="nav-item">
     <a class="nav-link" href="logout.php">

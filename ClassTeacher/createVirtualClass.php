@@ -9,13 +9,12 @@ $message = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $courseId = $_POST['courseId'];
     $classDate = $_POST['classDate'];
-    $uniqueCode = uniqid("ClassPlus-");
-    $jitsiLink = "https://meet.jit.si/" . $uniqueCode;
+    $jitsiRoom = "ClassPlus-" . uniqid(); // Room name only
 
     $stmt = $conn->prepare("INSERT INTO tblvirtualclass (courseId, teacherId, jitsiLink, classDate, isActive) VALUES (?, ?, ?, ?, 1)");
-    $stmt->bind_param("iiss", $courseId, $teacherId, $jitsiLink, $classDate);
+    $stmt->bind_param("iiss", $courseId, $teacherId, $jitsiRoom, $classDate);
     if ($stmt->execute()) {
-        $message = "<div class='alert alert-success'>Virtual class created successfully. <a href='$jitsiLink' target='_blank'>Join Now</a></div>";
+        $message = "<div class='alert alert-success'>Virtual class created successfully. <a href='startClass.php?room=$jitsiRoom' target='_blank'>Join Now</a></div>";
     } else {
         $message = "<div class='alert alert-danger'>Error creating virtual class.</div>";
     }
@@ -133,7 +132,7 @@ $stmt->close();
                             <td><?= htmlspecialchars($vc['CourseName']) ?></td>
                             <td><?= date("d M Y, h:i A", strtotime($vc['classDate'])) ?></td>
                             <td>
-                              <a href="<?= htmlspecialchars($vc['jitsiLink']) ?>#config.startWithAudioMuted=true&userInfo.displayName='Moderator'" target="_blank" class="btn btn-success btn-sm">
+                              <a href="startClass.php?room=<?= urlencode($vc['jitsiLink']) ?>" target="_blank" class="btn btn-success btn-sm">
                                 Join as Moderator
                               </a>
                               <a href="?end=<?= $vc['Id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to end this class?');">

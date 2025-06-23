@@ -1,5 +1,4 @@
 <?php
-error_reporting(0);
 include '../Includes/dbcon.php';
 include '../Includes/session.php';
 
@@ -8,6 +7,7 @@ use PHPMailer\PHPMailer\Exception;
 require '../vendor/autoload.php';
 
 $statusMsg = "";
+$row = []; // Avoid undefined variable when not in edit
 
 if (isset($_POST['save'])) {
     $symbolNo = $_POST['symbolnumber'];
@@ -199,59 +199,70 @@ if (isset($_GET['Id']) && $_GET['action'] == 'delete') {
                   <div class="form-group row mb-3">
     <div class="col-xl-6">
         <label class="form-control-label">Symbol Number<span class="text-danger ml-2">*</span></label>
-        <input type="text" class="form-control" name="symbolnumber" value="<?php echo htmlspecialchars($row['SymbolNo']); ?>" id="exampleInputSymbolNumber" required>
+        <input type="text" class="form-control" name="symbolnumber" 
+    value="<?php echo isset($row['SymbolNo']) ? htmlspecialchars($row['SymbolNo']) : ''; ?>" 
+    id="exampleInputSymbolNumber" required>
     </div>
     <div class="col-xl-6">
         <label class="form-control-label">Registration Number<span class="text-danger ml-2">*</span></label>
-        <input type="text" class="form-control" name="RegistrationNo" value="<?php echo htmlspecialchars($row['RegistrationNo']); ?>" id="exampleInputRegistrationNo" required>
+        <input type="text" class="form-control" name="RegistrationNo" 
+    value="<?php echo isset($row['RegistrationNo']) ? htmlspecialchars($row['RegistrationNo']) : ''; ?>" 
+    id="exampleInputRegistrationNo" required>
     </div>
 </div>
 <div class="form-group row mb-3">
     <div class="col-xl-6">
         <label class="form-control-label">First Name<span class="text-danger ml-2">*</span></label>
-        <input type="text" class="form-control" name="firstName" value="<?php echo htmlspecialchars($row['firstName']); ?>" id="exampleInputFirstName" required>
+        <input type="text" class="form-control" name="firstName" 
+    value="<?php echo isset($row['firstName']) ? htmlspecialchars($row['firstName']) : ''; ?>" 
+    id="exampleInputFirstName" required>
     </div>
     <div class="col-xl-6">
         <label class="form-control-label">Last Name<span class="text-danger ml-2">*</span></label>
-        <input type="text" class="form-control" name="lastName" value="<?php echo htmlspecialchars($row['lastName']); ?>" id="exampleInputLastName" required>
+       <input type="text" class="form-control" name="lastName" 
+    value="<?php echo isset($row['lastName']) ? htmlspecialchars($row['lastName']) : ''; ?>" 
+    id="exampleInputLastName" required>
     </div>
 </div>
 <div class="form-group row mb-3">
     <div class="col-xl-6">
         <label class="form-control-label">Program<span class="text-danger ml-2">*</span></label>
         <select name="Program" class="form-control mb-3">
-            <option value="">--Select Program--</option>
-            <option value="computer" <?php if($row['Program'] == 'computer') echo 'selected'; ?>>B.E Computer</option>
-            <option value="civil" <?php if($row['Program'] == 'civil') echo 'selected'; ?>>B.E Civil</option>
-            <option value="architecture" <?php if($row['Program'] == 'architecture') echo 'selected'; ?>>Architecture</option>
-        </select>
+    <option value="">--Select Program--</option>
+    <option value="computer" <?php if(isset($row['Program']) && $row['Program'] == 'computer') echo 'selected'; ?>>B.E Computer</option>
+    <option value="civil" <?php if(isset($row['Program']) && $row['Program'] == 'civil') echo 'selected'; ?>>B.E Civil</option>
+    <option value="architecture" <?php if(isset($row['Program']) && $row['Program'] == 'architecture') echo 'selected'; ?>>Architecture</option>
+</select>
     </div>
     <div class="col-xl-6">
         <label class="form-control-label">Registration Year<span class="text-danger ml-2">*</span></label>
-        <input type="text" class="form-control" name="Year(Batch)" value="<?php echo htmlspecialchars($row['Year(Batch)']); ?>" id="exampleInputYearBatch" required>
+        <input type="text" class="form-control" name="Year(Batch)" 
+    value="<?php echo isset($row['Year(Batch)']) ? htmlspecialchars($row['Year(Batch)']) : ''; ?>" 
+    id="exampleInputYearBatch" required>
     </div>
 </div>
 <div class="form-group row mb-3">
     <div class="col-xl-6">
         <label class="form-control-label">Select Class<span class="text-danger ml-2">*</span></label>
-        <?php
-        $qry = "SELECT * FROM tblclass ORDER BY Id ASC";
-        $result = $conn->query($qry);
-        $num = $result->num_rows;
-        if ($num > 0) {
-            echo '<select required name="ClassId" class="form-control mb-3">';
-            echo '<option value="">--Select Class--</option>';
-            while ($rows = $result->fetch_assoc()) {
-                $selected = ($row['ClassId'] == $rows['Id']) ? 'selected' : '';
-                echo '<option value="'.$rows['Id'].'" '.$selected.'>'.$rows['Program'].'-'.$rows['Year(Batch)'].' section:'.$rows['section'].'</option>';
-            }
-            echo '</select>';
-        }
-        ?>
+       <?php
+$qry = "SELECT * FROM tblclass ORDER BY Id ASC";
+$result = $conn->query($qry);
+if ($result->num_rows > 0) {
+    echo '<select required name="ClassId" class="form-control mb-3">';
+    echo '<option value="">--Select Class--</option>';
+    while ($rows = $result->fetch_assoc()) {
+        $selected = (isset($row['ClassId']) && $row['ClassId'] == $rows['Id']) ? 'selected' : '';
+        echo '<option value="'.$rows['Id'].'" '.$selected.'>'.$rows['Program'].'-'.$rows['Year(Batch)'].' section:'.$rows['section'].'</option>';
+    }
+    echo '</select>';
+}
+?>
     </div>
     <div class="col-xl-6">
         <label class="form-control-label">Email Address<span class="text-danger ml-2">*</span></label>
-        <input type="email" class="form-control" name="emailaddress" value="<?php echo htmlspecialchars($row['emailAddress']); ?>" id="exampleInputEmailAddress" required>
+       <input type="email" class="form-control" name="emailaddress" 
+    value="<?php echo isset($row['emailAddress']) ? htmlspecialchars($row['emailAddress']) : ''; ?>" 
+    id="exampleInputEmailAddress" required>
     </div>
 </div>
 <button type="submit" name="save" class="btn btn-primary">Save</button>
